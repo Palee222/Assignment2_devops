@@ -1,5 +1,18 @@
 # Assignment2_devops
 
+Starting up the things:
+- Backend:
+   - python3 -m venv .venv
+   - source .venv/bin/activate
+   - python -m pip install -r requirements.txt
+   - python app.py
+- Frontend
+   - cd DevOPS/secnote-frontend
+   - npm install
+   - npm run dev
+
+Connect the two with the following adress -> http://127.0.0.1:8000
+
 # Step-by-step guide for Assignment 2
 
 You have until Nov 22, about 16 days. The commit-cadence rule (12+ commits, 6+ distinct days, no day over 40%) means you can't do this in a weekend. Work in short branches and merge via pull requests from day one.
