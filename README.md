@@ -78,6 +78,31 @@ The commit-cadence rule (12+ commits, 6+ distinct days, no day over 40%) means y
     - build both Docker images
 23. Open a PR and watch it run. Keep one genuine failed-then-fixed run for the report.
 
+. Branch protection on main
+Do this after you have a CI workflow that has run at least once, because GitHub only lets you require status checks it has seen. Until then, set up just the PR requirement.
+               
+      Settings → Branches (or Settings → Rules → Rulesets in newer UIs).
+
+Click Add branch protection rule (or New ruleset → New branch ruleset).
+
+Branch name pattern: main.
+
+Tick:
+      
+      Require a pull request before merging
+      
+      Require status checks to pass before merging, then search for and select your CI job names once they exist (for example test-tasks, test-tags, build-images)
+
+      Require branches to be up to date before merging (optional but good)
+      
+      Save.
+
+Two caveats for a solo repo:
+
+- Don’t require approving reviews. You can’t approve your own PR, so you’d lock yourself out. Leave the required approvals at 0.
+  
+- If you tick Do not allow bypassing the settings or “Include administrators”, you can’t push straight to main even in an emergency. That’s fine for this assignment and actually enforces the “changes reach main through pull requests” rule from §9.
+
 ## Phase 6: One-time Azure setup (Days 8-9)
 
 Use your prefix on every resource (e.g. `jsmith-ieu2023`), and the resource group for your class (`rg-sdd-3a` or `3b`). Don't create resource groups, and don't exceed 2 Container Apps, 2 SQL DBs, 1 Static Web App. Either script this in Bicep/Terraform or document every command in the README. Sketch with Azure CLI:
