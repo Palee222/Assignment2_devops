@@ -1,5 +1,7 @@
 # Assignment2_devops
 
+      pip install pre-commit
+
 Starting up the things:
 - Backend:
    - python3 -m venv .venv
