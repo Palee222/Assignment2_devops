@@ -6,7 +6,6 @@ You have until Nov 22, about 16 days. The commit-cadence rule (12+ commits, 6+ d
 
 ## Phase 0: Prepare (Day 1)
 
-1. **Reread your Assignment 1 ADR-2** (the seam). Decide now whether to keep it. Moving it is allowed but must be justified in ADR-6.
 2. **Get the professor's items**: `system.schema.json` and the class service principal credentials. Store the credentials only as GitHub secrets, never in a file.
 3. **Plan the time**: set a rough plan like the one at the bottom, and commit something small every working session.
 4. **Repo hygiene**: in the same Assignment 1 repo, enable GitHub secret scanning and push protection. Add a `.gitignore` covering `.env`, and branch protection on `main` (require PR plus passing CI). A leaked secret is an incident, so prevent it.
