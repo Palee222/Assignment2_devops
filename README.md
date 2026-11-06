@@ -15,13 +15,11 @@ Connect the two with the following adress -> http://127.0.0.1:8000
 
 # Step-by-step guide for Assignment 2
 
-You have until Nov 22, about 16 days. The commit-cadence rule (12+ commits, 6+ distinct days, no day over 40%) means you can't do this in a weekend. Work in short branches and merge via pull requests from day one.
+You have until Nov 22. 
 
-## Phase 0: Prepare (Day 1)
+The commit-cadence rule (12+ commits, 6+ distinct days, no day over 40%) means you can't do this in a weekend. Work in short branches and merge via pull requests from day one.
 
 2. **Get the professor's items**: `system.schema.json` and the class service principal credentials. Store the credentials only as GitHub secrets, never in a file.
-3. **Plan the time**: set a rough plan like the one at the bottom, and commit something small every working session.
-4. **Repo hygiene**: in the same Assignment 1 repo, enable GitHub secret scanning and push protection. Add a `.gitignore` covering `.env`, and branch protection on `main` (require PR plus passing CI). A leaked secret is an incident, so prevent it.
 
 ## Phase 1: Restructure and split the code (Days 1-3)
 
@@ -161,11 +159,9 @@ It's on paper without notes and **multiplies your grade**. Be able to explain ev
 
 | Days | Focus |
 |---|---|
-| 1-3 | Phases 0-1 (split, port, endpoints) |
+| 1-2 | Phases 1 (split, port, endpoints) |
 | 3-6 | Phases 2-3 (migrations, Docker, compose) |
 | 5-7 | Phases 4-5 (tests, specs, CI) |
-| 8-11 | Phases 6-8 (Azure setup, CD, migration evidence) |
-| 12-13 | Phase 9 (failure and pipeline evidence) |
-| 13-16 | Phases 10-11 (docs, report, tag, study) |
-
-If you tell me your Assignment 1 stack (Python/Node, framework, ORM) and what the two domains are, I can help with specific Dockerfiles, the compose file, the migration runner, or the workflows.
+| 8-10 | Phases 6-8 (Azure setup, CD, migration evidence) |
+| 11-12 | Phase 9 (failure and pipeline evidence) |
+| 13-15 | Phases 10-11 (docs, report, tag, study) |
