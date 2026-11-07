@@ -23,7 +23,7 @@ The commit-cadence rule (12+ commits, 6+ distinct days, no day over 40%) means y
 
 2. **Get the professor's items**: `system.schema.json` and the class service principal credentials. Store the credentials only as GitHub secrets, never in a file.
 
-## Phase 1: Restructure and split the code (Days 1-3)
+## Phase 1: Restructure and split the code Nov 8
 
 5. Create the layout:
    ```
@@ -46,14 +46,14 @@ The commit-cadence rule (12+ commits, 6+ distinct days, no day over 40%) means y
    - Idempotent seed data per service.
 9. **Convert the UI to static files** in `ui/` that fetch JSON from the services. Load the base URLs from a `config.js`, not hardcoded.
 
-## Phase 2: Migrations (Days 3-4)
+## Phase 2: Migrations Nov 9
 
 10. Write a runner, or pick a tool (Alembic, Knex, Prisma). It must apply numbered files in order at startup, record them in `schema_migrations`, and apply nothing on a second boot.
 11. Write `001_init.sql` per service.
 12. **Write `002_*.sql` but do NOT merge it to main yet.** It must change a table that already holds data (add a column with default/backfill, etc.). Keep it on a branch until you've seeded data on Azure (Phase 7).
 13. Add **connect retries with backoff** (Azure SQL error 40613 while resuming from pause) around DB connection and migration start.
 
-## Phase 3: Containers and compose (Days 4-6)
+## Phase 3: Containers and compose Nov 10-11
 
 14. Write one **Dockerfile per service**: pinned dependencies, non-root user, no `COPY . .` (copy specific paths), no secrets or `.env`.
 15. Write `docker-compose.yml` with:
@@ -63,7 +63,7 @@ The commit-cadence rule (12+ commits, 6+ distinct days, no day over 40%) means y
     - `nginx:alpine` serving `ui/` (volume mount, no Dockerfile)
 16. Test from a **clean clone**: `docker compose up --build`. Then test `docker compose stop <service>` and confirm the other keeps working and the cross-seam flow fails gracefully.
 
-## Phase 4: Tests and docs-as-code (Days 5-7)
+## Phase 4: Tests and docs-as-code Nov 12
 
 17. Add unit tests per service and measure coverage (≥70% on core logic for each).
 18. Add **one cross-seam integration test**, against the compose stack or with the other service stubbed. Justify the choice in ADR-9.
@@ -71,7 +71,7 @@ The commit-cadence rule (12+ commits, 6+ distinct days, no day over 40%) means y
 20. Write `openapi.yaml` per service (including `/health`). The endpoints one service calls on the other must match in both documents.
 21. Copy `system.schema.json` to the root and write `system.yaml` with every service, env var (secrets with `secret: true`, no default), cross-seam calls, and Azure resource names. Validate it locally.
 
-## Phase 5: CI workflow (Day 7)
+## Phase 5: CI workflow Nov 13
 
 22. `.github/workflows/ci.yml` on every push and PR:
     - install, lint and test each service against a **SQL Server service container** (never Azure SQL)
@@ -124,7 +124,7 @@ Use your prefix on every resource (e.g. `jsmith-ieu2023`), and the resource grou
 30. **GitHub secrets**: service principal credentials, DB passwords, SWA token, and anything else sensitive.
 31. **Registry**: GHCR by default. Make the packages public, or give Container Apps pull credentials as a secret.
 
-## Phase 7: CD workflow (Days 9-11)
+## Phase 7: CD workflow Nov 14-15
 
 32. `.github/workflows/cd.yml`, on push to `main` only, and only if CI passed on the same commit (a `needs:` chain in one workflow, or `workflow_run`):
     - log in to GHCR and push images tagged with the **commit SHA**
@@ -133,7 +133,7 @@ Use your prefix on every resource (e.g. `jsmith-ieu2023`), and the resource grou
     - **post-deploy `/health` check** on both services, retrying for several minutes to tolerate cold start and DB resume; fail the run if it doesn't get 200
 33. Deploy with only `001` merged. Use the live app to create real data, then record it (screenshot or query) as "before" evidence.
 
-## Phase 8: Migration evidence (Day 11-12)
+## Phase 8: Migration evidence Nov 16
 
 34. **Now merge the `002` branch via PR.** Capture:
     - the successful CD run
@@ -146,7 +146,7 @@ Use your prefix on every resource (e.g. `jsmith-ieu2023`), and the resource grou
 36. Capture a screenshot or response of what users see when the other service is down. For the cold-start/failure paths, also scale one app down or stop it locally.
 37. Collect links: one successful CD run on `main`, and one failed run that you fixed (note the cause).
 
-## Phase 10: Documentation (Days 13-15)
+## Phase 10: Documentation Nov 17
 
 38. **ADR.md**: keep 1-5 untouched (mark superseded ones). Add 6-10 (split, data/migrations, Azure hosting and scale-to-zero consequences plus 100x changes, pipeline/testing, one thing not built). The entries must span ≥3 commit dates, so write them as you go rather than at the end.
 39. **AI_USAGE.md**: log AI help including Dockerfiles, workflows and IaC, and explain each file in your own words.
@@ -154,7 +154,7 @@ Use your prefix on every resource (e.g. `jsmith-ieu2023`), and the resource grou
 41. **Report (4-5 pages)**: before/after architecture, deployment diagram naming the Azure resources, DB diagram per service, migration evidence, partial-failure evidence, pipeline evidence, AI disclosure statement.
 42. Make sure `system.yaml`, the OpenAPI files, diagrams and deployment all match what is actually deployed.
 
-## Phase 11: Submit (by Nov 21 to be safe)
+## Phase 11: Submit Nov 21
 
 43. Confirm that `main` is deployed and the live URL works (cold-start it once).
 44. Check you have ≥12 new commits over ≥6 days with no day over 40%.
