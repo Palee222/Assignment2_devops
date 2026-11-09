@@ -15,7 +15,7 @@ Starting up the things:
 
 Connect the two with the following adress -> http://127.0.0.1:8000
 
-Nov 10 -> phase 2-3
+Nov 10 -> phase 1-2-3
 
 Nov 11 -> phase 4-5
 
