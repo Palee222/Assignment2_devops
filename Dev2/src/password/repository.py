@@ -1,6 +1,6 @@
 import sqlite3
 
-from DevOPS import db
+from db import db
 
 
 def get_weak_passwords():
