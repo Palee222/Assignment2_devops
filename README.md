@@ -4,10 +4,12 @@
 
 Starting up the things:
 - Backend:
-   - python3 -m venv .venv
-   - source .venv/bin/activate
-   - python -m pip install -r requirements.txt
-   - python app.py
+
+        cd /Users/Laura/Desktop/Dev2 (or cd into where you saved it)
+
+        source .venv/bin/activate
+
+        PYTHONPATH=src python -u app.py
 - Frontend
 
         cd /Users/Laura/Desktop/Dev2/ui
