@@ -9,13 +9,16 @@ Starting up the things:
    - python -m pip install -r requirements.txt
    - python app.py
 - Frontend
-   - cd DevOPS/secnote-frontend
-   - npm install
-   - npm run dev
+
+        cd /Users/Laura/Desktop/Dev2/ui
+
+        npm install
+
+        npm run dev
 
 Connect the two with the following adress -> http://127.0.0.1:8000
 
-Nov 10 -> phase 1-2-3
+Nov 10 -> phase 3
 
 Nov 11 -> phase 4-5
 
