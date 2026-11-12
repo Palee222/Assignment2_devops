@@ -20,9 +20,7 @@ Starting up the things:
 1. Docker file meeting assignment 2 rules
 2. docker-compose.yml that starts the whole system with one commant
 
-Nov 12 -> phase 3
-
-Nov 13 -> phase 4-5
+Nov 13 -> phase 3-4-5
 
 Nov 14 -> Phase 6-7
 
