@@ -17,8 +17,8 @@ Starting up the things:
         npm install
 
         npm run dev
-
-Connect the two with the following adress -> http://127.0.0.1:8000
+1. Docker file meeting assignment 2 rules
+2. docker-compose.yml that starts the whole system with one commant
 
 Nov 12 -> phase 3
 
