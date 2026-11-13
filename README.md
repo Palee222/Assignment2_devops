@@ -24,6 +24,9 @@ Starting up the things:
 
         docker compose up --build password-service incidents-service
 
+            docker compose config --quiet
+      docker compose up -d sqlserver db-init
+      docker compose wait db-init
 
 1. Docker file meeting assignment 2 rules
 2. docker-compose.yml that starts the whole system with one commant
