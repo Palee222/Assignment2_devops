@@ -31,12 +31,3 @@ Nov 19 -> phase 10-11
 Nov 20 -> phase 12-13
 
 Nov 21 -> final checks
-
-
-Nov 19
-
-Nov 20
-
-Nov 21
-
-Nov 22
