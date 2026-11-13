@@ -17,6 +17,14 @@ Starting up the things:
         npm install
 
         npm run dev
+- Docker
+
+        docker compose up -d sqlserver db-init
+        docker compose wait db-init
+
+        docker compose up --build password-service incidents-service
+
+
 1. Docker file meeting assignment 2 rules
 2. docker-compose.yml that starts the whole system with one commant
 
