@@ -39,4 +39,4 @@ Nov 18 -> phase 8-9-10
 
 Nov 19 -> phase 11-12-13
 
-Nov 20 -> final checks
+Nov 20 -> report, adr and stuff
