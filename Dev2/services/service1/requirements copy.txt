@@ -1,6 +1,3 @@
-fastapi
-uvicorn
-jinja2
-python-multipart
+-r ../../requirements.txt
 pytest
 pytest-cov

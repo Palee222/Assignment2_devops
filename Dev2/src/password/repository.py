@@ -1,15 +1,14 @@
-import sqlite3
+from sqlalchemy import insert, select
+from sqlalchemy.exc import SQLAlchemyError
 
 from db import db
 
 
 def get_weak_passwords():
-    conn = db.get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT password FROM weak_passwords")
-    passwords = [row[0] for row in cur.fetchall()]
-    conn.close()
-    return passwords
+    with db.get_connection() as conn:
+        rows = conn.execute(select(db.weak_passwords.c.password))
+        return [row.password for row in rows]
+
 
 def seed_weak_passwords():
     weak_passwords = [
@@ -19,27 +18,25 @@ def seed_weak_passwords():
         "football", "123123", "monkey", "654321", "!@#$%^&*",
         "charlie", "aa123456", "donald", "password1", "qwerty123"
     ]
-    conn = db.get_connection()
     try:
-        cur = conn.cursor()
-        cur.execute("SELECT 1 FROM weak_passwords LIMIT 1")
-        if cur.fetchone() is not None:
-            return "Weak passwords already seeded."
+        with db.get_connection() as conn, conn.begin():
+            existing_password = conn.execute(
+                select(db.weak_passwords.c.id).limit(1)
+            ).first()
+            if existing_password is not None:
+                return "Weak passwords already seeded."
 
-        cur.executemany(
-            "INSERT INTO weak_passwords (password) VALUES (?)",
-            [(password,) for password in weak_passwords],
-        )
-        conn.commit()
+            conn.execute(
+                insert(db.weak_passwords),
+                [{"password": password} for password in weak_passwords],
+            )
         return f"Inserted {len(weak_passwords)} weak passwords."
-    except sqlite3.Error as error:
-        conn.rollback()
+    except SQLAlchemyError as error:
         raise RuntimeError(f"Could not seed weak passwords: {error}") from error
-    finally:
-        conn.close()
+
 
 def get_password_rules():
-    rules = {
+    return {
         "name": "Default password policy",
         "description": "Default rules for checking password strength.",
         "min_length": 8,
@@ -48,7 +45,7 @@ def get_password_rules():
         "require_digit": True,
         "require_symbol": True,
     }
-    return rules
+
 
 def seed_default_rules():
     rules = get_password_rules()

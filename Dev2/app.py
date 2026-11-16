@@ -3,6 +3,7 @@
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
+from urllib.parse import urlsplit
  
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -10,9 +11,8 @@ from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
 import uvicorn
  
-from db import init_db
+from db.db import init_db
 from incidents.routes import router as incidents_router
-from password.repository import seed_default_rules, seed_weak_passwords
 from password.routes import router as password_router
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,25 +25,53 @@ __file__ is the path to the current Python file
 '''
 PORT = int(os.getenv("PORT", "8000"))
 
-app = FastAPI() #creates the web application, object stores your routes and handles incoming browser requests
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    init_db()
+    yield
+
+
+def get_cors_allowed_origins():
+    configured_origins = os.getenv("CORS_ALLOWED_ORIGINS")
+    if configured_origins is None:
+        return ["http://localhost:5173", "http://127.0.0.1:5173"]
+
+    origins = [origin.strip() for origin in configured_origins.split(",") if origin.strip()]
+    for origin in origins:
+        parsed = urlsplit(origin)
+        if (
+            parsed.scheme not in {"http", "https"}
+            or not parsed.netloc
+            or parsed.path not in {"", "/"}
+            or parsed.query
+            or parsed.fragment
+            or parsed.username
+            or parsed.password
+            or "*" in origin
+        ):
+            raise ValueError(
+                f"Invalid CORS origin {origin!r}; configure scheme and host only."
+            )
+    return origins
+
+
+app = FastAPI(lifespan=lifespan) #creates the web application, object stores your routes and handles incoming browser requests
 #FastAPI is a Python framework that handles HTTP requests and responses.
 #This tells FastAPI/Jinja2 where your HTML files live or where to look for them. The directory is set to the templates folder inside the src folder.:
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=get_cors_allowed_origins(),
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "templates"))
 
-#Static files are mounted, This line makes /static serve files from a folder:
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "src" / "static")), name="static") #Configuring static files
 
 app.include_router(incidents_router)
 app.include_router(password_router)
 
-#The route is defined using the @app.get("/") decorator, which means that this function will be called when a GET request is made to the root URL ("/") of the application.
-#Defining the homepage
 @app.get("/") #tells FastAPI: “when someone visits the root URL /, run this function”
 def home(request: Request): #request contains the browser request information
     return templates.TemplateResponse( #TemplateResponse loads the HTML template file base.html
@@ -51,31 +79,9 @@ def home(request: Request): #request contains the browser request information
         name="home.html",
         context={"request": request}, #the browser gets the rendered HTML page back
     )
-'''
-So when you open: http://localhost:8001/ the function runs and returns the HTML page.
-'''
 
 
 if __name__ == "__main__":
-    init_db() #initialize SQLite before starging the server
-    print(seed_weak_passwords())
     uvicorn.run(app, host="0.0.0.0", port=PORT) #This line starts the server:
 
 
-'''
-source /Users/Laura/venvs/myapp/bin/activate
-cd /Users/Laura
-python3 /Users/Laura/Desktop/app.py
-'''
-
-'''
-This is the request flow:
-
-1. Browser requests http://localhost:8001/
-2. FastAPI route / matches
-3. home() function runs
-4. It loads base.html
-5. The HTML is returned to the browser
-6. Browser renders it and shows:
-Hello from FastAPI
-'''
