@@ -1,0 +1,111 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    user: "10001:10001"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa
+          -P "$$MSSQL_SA_PASSWORD" -C -b -Q "SELECT 1" >/dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    user: "10001:10001"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    entrypoint:
+      - /bin/bash
+      - -c
+    command:
+      - |
+        set -eu
+        validate_password() {
+          local value="$$1"
+          if [[ ! "$$value" =~ ^[A-Za-z0-9_-]{16,128}$$ ||
+                ! "$$value" =~ [A-Z] ||
+                ! "$$value" =~ [a-z] ||
+                ! "$$value" =~ [0-9] ||
+                ! "$$value" =~ [-_] ]]; then
+            echo "Service DB passwords must be 16-128 URL-safe characters and include upper/lowercase, digits, and a hyphen or underscore." >&2
+            return 1
+          fi
+        }
+        validate_password "$$PASSWORD_DB_PASSWORD"
+        validate_password "$$INCIDENTS_DB_PASSWORD"
+        if [[ "$$PASSWORD_DB_PASSWORD" == "$$INCIDENTS_DB_PASSWORD" ||
+              "$$PASSWORD_DB_PASSWORD" == "$$MSSQL_SA_PASSWORD" ||
+              "$$INCIDENTS_DB_PASSWORD" == "$$MSSQL_SA_PASSWORD" ]]; then
+          echo "SQL Server and service database passwords must all be different." >&2
+          exit 1
+        fi
+        exec /opt/mssql-tools18/bin/sqlcmd -S sqlserver,1433 -U sa \
+          -P "$$MSSQL_SA_PASSWORD" -C -b \
+          -v PASSWORD_DB_PASSWORD="$$PASSWORD_DB_PASSWORD" \
+          INCIDENTS_DB_PASSWORD="$$INCIDENTS_DB_PASSWORD" \
+          -i /db/init.sql
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}
+      PASSWORD_DB_PASSWORD: ${PASSWORD_DB_PASSWORD:?Set PASSWORD_DB_PASSWORD in .env}
+      INCIDENTS_DB_PASSWORD: ${INCIDENTS_DB_PASSWORD:?Set INCIDENTS_DB_PASSWORD in .env}
+    volumes:
+      - ./db/init.sql:/db/init.sql:ro
+    restart: "no"
+
+  password-service:
+    build: .
+    platform: linux/amd64
+    user: "10001:10001"
+    command:
+      - uvicorn
+      - service1.app:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    environment:
+      DATABASE_URL: "mssql+pyodbc://password_service_login:${PASSWORD_DB_PASSWORD:?Set PASSWORD_DB_PASSWORD in .env}@sqlserver:1433/PasswordServiceDb?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes&TrustServerCertificate=yes"
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:8001:8000"
+    restart: unless-stopped
+
+  incidents-service:
+    build: .
+    platform: linux/amd64
+    user: "10001:10001"
+    command:
+      - uvicorn
+      - service2.app:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    environment:
+      DATABASE_URL: "mssql+pyodbc://incidents_service_login:${INCIDENTS_DB_PASSWORD:?Set INCIDENTS_DB_PASSWORD in .env}@sqlserver:1433/IncidentsServiceDb?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes&TrustServerCertificate=yes"
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:8002:8000"
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:
