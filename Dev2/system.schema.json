@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/secnote-system.schema.json",
+  "title": "Secnote system configuration",
+  "type": "object",
+  "required": ["name", "ui", "services", "azure"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ui": {
+      "type": "object",
+      "required": ["path", "calls"],
+      "properties": {
+        "path": { "type": "string" },
+        "calls": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "services": {
+      "type": "object",
+      "required": ["password", "incidents"],
+      "properties": {
+        "password": { "$ref": "#/$defs/service" },
+        "incidents": { "$ref": "#/$defs/service" }
+      },
+      "additionalProperties": false
+    },
+    "azure": {
+      "type": "object",
+      "required": ["deployment"],
+      "properties": {
+        "deployment": { "type": "string" },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "envVariable": {
+      "type": "object",
+      "properties": {
+        "default": {},
+        "secret": { "type": "boolean" },
+        "description": { "type": "string" }
+      },
+      "required": ["description"],
+      "additionalProperties": false
+    },
+    "service": {
+      "type": "object",
+      "required": [
+        "description",
+        "path",
+        "openapi",
+        "port_default",
+        "health",
+        "migrations",
+        "env"
+      ],
+      "properties": {
+        "description": { "type": "string", "minLength": 1 },
+        "path": { "type": "string" },
+        "openapi": { "type": "string" },
+        "port_default": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "health": { "type": "string" },
+        "migrations": { "type": "string" },
+        "env": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/envVariable" }
+        },
+        "calls": {
+          "type": "object",
+          "required": ["service", "url_env", "endpoints", "timeout_s", "on_failure"],
+          "properties": {
+            "service": { "type": "string" },
+            "url_env": { "type": "string" },
+            "endpoints": { "type": "array", "items": { "type": "string" } },
+            "timeout_s": { "type": "number", "exclusiveMinimum": 0 },
+            "on_failure": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

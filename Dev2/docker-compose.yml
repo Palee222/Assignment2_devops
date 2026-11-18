@@ -68,7 +68,10 @@ services:
     restart: "no"
 
   password-service:
-    build: .
+    build:
+      context: ./services/service1
+      args:
+        GIT_SHA: ${GIT_SHA:-unknown}
     platform: linux/amd64
     user: "10001:10001"
     command:
@@ -79,16 +82,33 @@ services:
       - --port
       - "8000"
     environment:
+      GIT_SHA: ${GIT_SHA:-unknown}
+      INCIDENTS_SERVICE_URL: http://incidents-service:8000
+      INCIDENTS_TIMEOUT_S: "2"
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
       DATABASE_URL: "mssql+pyodbc://password_service_login:${PASSWORD_DB_PASSWORD:?Set PASSWORD_DB_PASSWORD in .env}@sqlserver:1433/PasswordServiceDb?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes&TrustServerCertificate=yes"
     depends_on:
       db-init:
         condition: service_completed_successfully
     ports:
       - "127.0.0.1:8001:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     restart: unless-stopped
 
   incidents-service:
-    build: .
+    build:
+      context: ./services/service2
+      args:
+        GIT_SHA: ${GIT_SHA:-unknown}
     platform: linux/amd64
     user: "10001:10001"
     command:
@@ -99,13 +119,37 @@ services:
       - --port
       - "8000"
     environment:
+      GIT_SHA: ${GIT_SHA:-unknown}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
       DATABASE_URL: "mssql+pyodbc://incidents_service_login:${INCIDENTS_DB_PASSWORD:?Set INCIDENTS_DB_PASSWORD in .env}@sqlserver:1433/IncidentsServiceDb?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes&TrustServerCertificate=yes"
     depends_on:
       db-init:
         condition: service_completed_successfully
     ports:
       - "127.0.0.1:8002:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     restart: unless-stopped
+
+  migration-runner:
+    profiles: ["migration"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    user: "10001:10001"
+    environment:
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:-}
+    volumes:
+      - ./data:/migration-data:ro
 
 volumes:
   sqlserver_data:

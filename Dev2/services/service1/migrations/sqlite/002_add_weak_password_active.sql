@@ -1,0 +1,2 @@
+ALTER TABLE weak_passwords
+ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1;

@@ -1,0 +1,112 @@
+openapi: 3.1.0
+info:
+  title: Password Service API
+  version: 1.0.0
+  description: Scores passwords and can report weak-password findings to Incidents.
+servers:
+  - url: /
+paths:
+  /health:
+    get:
+      operationId: getPasswordServiceHealth
+      summary: Check service and database health
+      responses:
+        "200":
+          description: The service can read and write its database.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        "503":
+          description: The service cannot use its database.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /password/api/health:
+    get:
+      operationId: getPasswordApiHealth
+      summary: Check the password API route
+      responses:
+        "200":
+          description: The password API route is available.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    const: ok
+  /password/api/check:
+    post:
+      operationId: checkPassword
+      summary: Score a password
+      description: >
+        The password is not logged or persisted. If report_as_incident is true
+        and the result is weak, only the score and strength are sent to Incidents.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordCheckRequest"
+      responses:
+        "200":
+          description: Password score and optional incident-report outcome.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PasswordCheck"
+        "422":
+          description: Invalid request.
+components:
+  schemas:
+    Health:
+      type: object
+      required: [status, database, git_sha]
+      properties:
+        status:
+          type: string
+          enum: [ok, unhealthy]
+        database:
+          type: string
+          enum: [ok, unavailable]
+        git_sha:
+          type: string
+    PasswordCheckRequest:
+      type: object
+      required: [password]
+      properties:
+        password:
+          type: string
+          minLength: 1
+        report_as_incident:
+          type: boolean
+          default: false
+      additionalProperties: false
+    PasswordCheck:
+      type: object
+      required: [score, strength, feedback, incident_report]
+      properties:
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        strength:
+          type: string
+          enum: [Weak, Moderate, Strong, Very Strong]
+        feedback:
+          type: array
+          items:
+            type: string
+        incident_report:
+          type: object
+          required: [status, incident_id]
+          properties:
+            status:
+              type: string
+              enum: [not_requested, not_needed, created, unavailable]
+            incident_id:
+              type: [integer, "null"]

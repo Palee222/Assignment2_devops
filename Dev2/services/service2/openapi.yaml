@@ -1,0 +1,154 @@
+openapi: 3.1.0
+info:
+  title: Incidents Service API
+  version: 1.0.0
+  description: Manages incidents, their severity/status, and tags.
+servers:
+  - url: /
+paths:
+  /health:
+    get:
+      operationId: getIncidentsServiceHealth
+      summary: Check service and database health
+      responses:
+        "200":
+          description: The service can read and write its database.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        "503":
+          description: The service cannot use its database.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /incidents:
+    get:
+      operationId: listIncidents
+      responses:
+        "200":
+          description: Incidents in ascending identifier order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Incident"
+    post:
+      operationId: createIncident
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IncidentCreate"
+      responses:
+        "200":
+          description: Incident created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Incident"
+        "422":
+          description: Invalid incident fields.
+  /incidents/{incident_id}:
+    get:
+      operationId: getIncident
+      parameters:
+        - name: incident_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Incident and tags.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Incident"
+        "404":
+          description: Incident not found.
+  /incidents/{incident_id}/status:
+    post:
+      operationId: updateIncidentStatus
+      parameters:
+        - name: incident_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: "#/components/schemas/Status"
+      responses:
+        "200":
+          description: Updated incident.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Incident"
+        "404":
+          description: Incident not found.
+        "422":
+          description: Invalid status.
+components:
+  schemas:
+    Health:
+      type: object
+      required: [status, database, git_sha]
+      properties:
+        status:
+          type: string
+          enum: [ok, unhealthy]
+        database:
+          type: string
+          enum: [ok, unavailable]
+        git_sha:
+          type: string
+    Severity:
+      type: string
+      enum: [Low, Medium, High, Critical]
+    Status:
+      type: string
+      enum: [Open, "In Progress", Resolved, Closed]
+    IncidentCreate:
+      type: object
+      required: [title, description, severity]
+      properties:
+        title:
+          type: string
+          maxLength: 500
+        description:
+          type: string
+        severity:
+          $ref: "#/components/schemas/Severity"
+        status:
+          $ref: "#/components/schemas/Status"
+        tags:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+    Incident:
+      allOf:
+        - $ref: "#/components/schemas/IncidentCreate"
+        - type: object
+          required: [id, created_at, updated_at, tags]
+          properties:
+            id:
+              type: integer
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
