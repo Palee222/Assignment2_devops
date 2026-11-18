@@ -96,10 +96,15 @@ running the services outside Compose.
 Run the backend tests and coverage report with:
 
 ```sh
-PYTHONPATH=.:src python -m pytest \
-  services/service1/tests services/service2/tests tests \
-  --cov=services.service1 --cov=services.service2 --cov-report=term-missing
+PYTHONPATH=.:src python -m pytest services/service1/tests \
+  --cov=services.service1 --cov-fail-under=70 --cov-report=term-missing
+PYTHONPATH=.:src python -m pytest services/service2/tests tests/test_cross_service.py \
+  --cov=services.service2 --cov-fail-under=70 --cov-report=term-missing
 ```
+
+The coverage checks are measured and enforced separately for each service.
+Compose tests target the local SQL Server container on `127.0.0.1:1433`;
+they must not be pointed at Azure SQL.
 
 GitHub Actions runs backend tests with coverage, lints the modified UI API
 files, and builds the UI. The OpenAPI specifications are at

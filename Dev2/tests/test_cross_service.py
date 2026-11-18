@@ -84,3 +84,29 @@ def test_request_logs_include_method_path_status_and_duration(caplog):
         "status": 200,
     }.items() <= request_events[-1].items()
     assert isinstance(request_events[-1]["duration_ms"], float)
+
+
+def test_cross_service_http_error_is_partial_failure(monkeypatch):
+    from urllib.error import HTTPError
+
+    def fail_to_send(_request, timeout):
+        raise HTTPError(
+            "http://incidents-service/incidents",
+            503,
+            "Unavailable",
+            {},
+            None,
+        )
+
+    monkeypatch.setattr(password_service, "urlopen", fail_to_send)
+    with TestClient(password_app) as password_client:
+        response = password_client.post(
+            "/password/api/check",
+            json={"password": "password", "report_as_incident": True},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["incident_report"] == {
+        "status": "unavailable",
+        "incident_id": None,
+    }
