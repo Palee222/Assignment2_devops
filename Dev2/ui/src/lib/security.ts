@@ -51,8 +51,13 @@ export async function apiRequest<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
+  const timeoutSignal = AbortSignal.timeout(8_000);
+  const signal = init?.signal
+    ? AbortSignal.any([init.signal, timeoutSignal])
+    : timeoutSignal;
   const response = await fetch(`${baseUrl.replace(/\/$/, "")}${path}`, {
     ...init,
+    signal,
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
   if (!response.ok) {

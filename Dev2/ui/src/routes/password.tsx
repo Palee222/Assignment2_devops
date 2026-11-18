@@ -61,6 +61,7 @@ function PasswordPage() {
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
   const [result, setResult] = useState<PasswordCheck | null>(null);
+  const [reportAsIncident, setReportAsIncident] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { url, ready, configurationError, check } = usePasswordChecker();
@@ -78,7 +79,7 @@ function PasswordPage() {
     setLoading(true);
     setError("");
     try {
-      setResult(await check(password));
+      setResult(await check(password, reportAsIncident));
     } catch (cause) {
       setResult(null);
       setError(
@@ -136,6 +137,17 @@ function PasswordPage() {
               </AppButton>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={reportAsIncident}
+                  onChange={(event) =>
+                    setReportAsIncident(event.target.checked)
+                  }
+                  className="size-4 accent-primary"
+                />
+                Create an incident if the result is weak
+              </label>
               <AppButton
                 type="submit"
                 disabled={!ready || !password || !url || loading}
@@ -212,6 +224,26 @@ function PasswordPage() {
                     checks.
                   </p>
                 )}
+                {result.incident_report?.status === "created" && (
+                  <p className="mt-4 text-sm text-success" role="status">
+                    Incident INC-{result.incident_report.incident_id} was
+                    created. Only the score and strength were sent.
+                  </p>
+                )}
+                {result.incident_report?.status === "unavailable" && (
+                  <p className="mt-4 text-sm text-warning" role="status">
+                    The incident service is unavailable. Your password result is
+                    still available; you can report it later from Incidents.
+                  </p>
+                )}
+                {reportAsIncident &&
+                  result.strength === "Weak" &&
+                  !result.incident_report && (
+                    <p className="mt-4 text-sm text-warning" role="status">
+                      This password API does not support incident reporting.
+                      Connect the standalone services in Connection settings.
+                    </p>
+                  )}
               </div>
             )}
           </div>
@@ -250,8 +282,9 @@ function PasswordPage() {
             <div>
               <p className="text-xs font-bold">Sent only when you check</p>
               <p className="mt-1 text-xs leading-5">
-                The password is sent to the configured password service for
-                scoring, never to the incident service or browser storage.
+                The password is sent only to the password service for scoring
+                and is never stored. If you request an incident, only the score
+                and strength are sent to the incident service.
               </p>
             </div>
           </div>

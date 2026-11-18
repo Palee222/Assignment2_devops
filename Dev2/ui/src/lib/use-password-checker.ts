@@ -6,6 +6,10 @@ export type PasswordCheck = {
   score: number;
   strength: "Weak" | "Moderate" | "Strong" | "Very Strong";
   feedback: string[];
+  incident_report?: {
+    status: "not_requested" | "not_needed" | "created" | "unavailable";
+    incident_id: number | null;
+  };
 };
 
 export function usePasswordChecker() {
@@ -27,14 +31,17 @@ export function usePasswordChecker() {
     }
   }, []);
 
-  async function check(password: string) {
+  async function check(password: string, reportAsIncident = false) {
     if (!url)
       throw new Error(
         "Connect the password service in Connection settings first.",
       );
     return apiRequest<PasswordCheck>(url, "/password/api/check", {
       method: "POST",
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({
+        password,
+        report_as_incident: reportAsIncident,
+      }),
     });
   }
 
