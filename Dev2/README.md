@@ -109,10 +109,34 @@ they must not be pointed at Azure SQL.
 GitHub Actions runs backend tests with coverage, lints the modified UI API
 files, and builds the UI. The OpenAPI specifications are at
 `services/service1/openapi.yaml` and `services/service2/openapi.yaml`.
+Validate both documents from the repository root with:
+
+```sh
+npx @redocly/cli lint services/service1/openapi.yaml services/service2/openapi.yaml
+```
 
 The repository does not provision Azure resources. Set up an Azure deployment
 environment and credentials before configuring `system.yaml` with actual
 resource names or enabling cloud deployment.
+
+The reusable post-deployment health-check workflow waits for both services'
+`/health` endpoints to return HTTP 200. Call it from a deployment workflow after
+the deploy job succeeds:
+
+```yaml
+jobs:
+  post-deployment-health-check:
+    needs: deploy
+    uses: ./.github/workflows/post-deployment-health-check.yml
+    with:
+      password_service_url: ${{ vars.PASSWORD_SERVICE_URL }}
+      incidents_service_url: ${{ vars.INCIDENTS_SERVICE_URL }}
+      timeout_seconds: 300
+      retry_interval_seconds: 10
+```
+
+Configure the two base URLs as GitHub Actions variables. The check job fails
+if either endpoint does not return HTTP 200 before its timeout.
 
 For a failed production migration, follow ADR-7 in [ADR.md](./ADR.md): stop
 the rollout, retain the database and migration ledger, restore a verified

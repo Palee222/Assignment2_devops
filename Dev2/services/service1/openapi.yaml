@@ -5,6 +5,7 @@ info:
   description: Scores passwords and can report weak-password findings to Incidents.
 servers:
   - url: /
+security: []
 paths:
   /health:
     get:

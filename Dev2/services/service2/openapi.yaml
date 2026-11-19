@@ -5,6 +5,7 @@ info:
   description: Manages incidents, their severity/status, and tags.
 servers:
   - url: /
+security: []
 paths:
   /health:
     get:
@@ -26,6 +27,7 @@ paths:
   /incidents:
     get:
       operationId: listIncidents
+      summary: List incidents
       responses:
         "200":
           description: Incidents in ascending identifier order.
@@ -37,6 +39,7 @@ paths:
                   $ref: "#/components/schemas/Incident"
     post:
       operationId: createIncident
+      summary: Create an incident
       requestBody:
         required: true
         content:
@@ -55,6 +58,7 @@ paths:
   /incidents/{incident_id}:
     get:
       operationId: getIncident
+      summary: Retrieve an incident
       parameters:
         - name: incident_id
           in: path
@@ -73,6 +77,7 @@ paths:
   /incidents/{incident_id}/status:
     post:
       operationId: updateIncidentStatus
+      summary: Update an incident's status
       parameters:
         - name: incident_id
           in: path
