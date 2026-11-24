@@ -28,8 +28,9 @@ over URLs saved in browser settings.
 
 Set `CORS_ALLOWED_ORIGINS` in the backend environment to a comma-separated
 list of exact UI origins (scheme, hostname, and optional port; no paths or
-wildcards). The command above permits the two common local Vite origins. For
-production, configure only the deployed UI origin, for example
+wildcards). Compose allows the usual local Vite origins on port 5173 and the
+project's sandbox dev-server origins on port 8080. For production, configure
+only the deployed UI origin, for example
 `CORS_ALLOWED_ORIGINS=https://your-ui.example.com`, and use HTTPS. The same
 allowlist protects both APIs served by the combined FastAPI app.
 
@@ -74,8 +75,9 @@ SQL Server configuration.
 Each standalone service applies its own ordered migrations at startup and
 records them in `schema_migrations`. Their SQL Server and SQLite scripts live
 under `services/service1/migrations/` and `services/service2/migrations/`.
-Applied migration files are checksum-verified and immutable: make a new
-numbered migration for every schema change. The combined development app still
+Each newly applied migration is logged; later starts verify its checksum and
+skip it. Applied migration files are immutable: make a new numbered migration
+for every schema change. The combined development app still
 uses the corresponding scripts under `src/password/migrations/` and
 `src/incidents/migrations/`.
 The password service's second migration adds `is_active` to

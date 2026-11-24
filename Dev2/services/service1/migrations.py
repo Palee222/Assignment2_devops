@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import re
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -10,6 +11,7 @@ from sqlalchemy.engine import Connection, Engine
 
 MIGRATION_DIR = Path(__file__).resolve().parent / "migrations"
 MIGRATION_NAME = re.compile(r"(?P<number>\d{3})_[a-z0-9_]+\.sql")
+logger = logging.getLogger("password-service")
 
 metadata = MetaData()
 schema_migrations = Table(
@@ -127,3 +129,4 @@ def run_migrations(engine: Engine) -> None:
                     applied_at=datetime.now(timezone.utc),
                 )
             )
+        logger.info("Applied password migration %s", path.name)

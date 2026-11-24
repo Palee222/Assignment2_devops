@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+node_modules/
+Dev2/ui/.output/
+Dev2/ui/.wrangler/

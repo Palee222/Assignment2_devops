@@ -1,5 +1,11 @@
+import hashlib
+import logging
+from datetime import datetime, timezone
+
+import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, insert, select, text
+from sqlalchemy.dialects import mssql
 from sqlalchemy.pool import StaticPool
 
 from services.service1.app import app
@@ -144,3 +150,113 @@ def test_password_repository_database_crud(monkeypatch):
         )
     assert "password" not in repository.get_weak_passwords()
     engine.dispose()
+
+
+def test_weak_password_filter_uses_sql_server_boolean_syntax(monkeypatch):
+    class Connection:
+        def execute(self, statement):
+            self.compiled = str(statement.compile(dialect=mssql.dialect()))
+            return []
+
+    class Engine:
+        def __init__(self):
+            self.connection = Connection()
+
+        def connect(self):
+            class ConnectionContext:
+                def __enter__(self):
+                    return engine.connection
+
+                def __exit__(self, *_args):
+                    return None
+
+            return ConnectionContext()
+
+    engine = Engine()
+    monkeypatch.setattr(repository, "engine", engine)
+
+    assert repository.get_weak_passwords() == []
+    assert "weak_passwords.is_active = 1" in engine.connection.compiled
+    assert " IS 1" not in engine.connection.compiled
+
+
+def test_pending_migrations_preserve_rows_and_run_once(caplog):
+    engine = create_engine("sqlite://")
+    try:
+        initial_migration = migrations._migration_files("sqlite")[0]
+        checksum = hashlib.sha256(initial_migration.read_bytes()).hexdigest()
+        with engine.begin() as connection:
+            migrations.metadata.create_all(
+                connection, tables=[migrations.schema_migrations]
+            )
+            migrations._execute_migration(
+                connection, initial_migration, "sqlite"
+            )
+            connection.execute(
+                text(
+                    "INSERT INTO weak_passwords (password, source) "
+                    "VALUES ('legacy-password', 'legacy')"
+                )
+            )
+            connection.execute(
+                insert(migrations.schema_migrations).values(
+                    service="password",
+                    version=initial_migration.name,
+                    checksum=checksum,
+                    applied_at=datetime.now(timezone.utc),
+                )
+            )
+
+        caplog.set_level(logging.INFO, logger="password-service")
+        migrations.run_migrations(engine)
+        migrations.run_migrations(engine)
+
+        with engine.connect() as connection:
+            preserved_row = connection.execute(
+                text(
+                    "SELECT password, source, is_active "
+                    "FROM weak_passwords WHERE password = 'legacy-password'"
+                )
+            ).one()
+            applied_versions = connection.execute(
+                select(migrations.schema_migrations.c.version)
+                .where(migrations.schema_migrations.c.service == "password")
+                .order_by(migrations.schema_migrations.c.version)
+            ).scalars().all()
+
+        assert tuple(preserved_row) == ("legacy-password", "legacy", 1)
+        assert applied_versions == [
+            "001_init.sql",
+            "002_add_weak_password_active.sql",
+            "003_add_health_probes.sql",
+        ]
+        assert sum(
+            record.name == "password-service"
+            and record.getMessage()
+            == "Applied password migration 002_add_weak_password_active.sql"
+            for record in caplog.records
+        ) == 1
+    finally:
+        engine.dispose()
+
+
+def test_migration_runner_rejects_changed_applied_migration():
+    engine = create_engine("sqlite://")
+    try:
+        with engine.begin() as connection:
+            migrations.metadata.create_all(
+                connection, tables=[migrations.schema_migrations]
+            )
+            connection.execute(
+                insert(migrations.schema_migrations).values(
+                    service="password",
+                    version="001_init.sql",
+                    checksum="0" * 64,
+                    applied_at=datetime.now(timezone.utc),
+                )
+            )
+
+        with pytest.raises(RuntimeError, match="001_init.sql was modified"):
+            migrations.run_migrations(engine)
+    finally:
+        engine.dispose()

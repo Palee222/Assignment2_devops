@@ -8,3 +8,6 @@ rest of the explanations for assignment 2 is in Dev2
 
     cd ui
     npm run lint
+
+github
+https://github.com/Palee222/Assignment2_devops.git

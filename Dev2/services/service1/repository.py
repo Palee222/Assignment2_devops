@@ -1,4 +1,4 @@
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, true
 from sqlalchemy.exc import SQLAlchemyError
 
 from .database import engine, password_rules, weak_passwords
@@ -7,7 +7,9 @@ from .database import engine, password_rules, weak_passwords
 def get_weak_passwords() -> list[str]:
     with engine.connect() as connection:
         rows = connection.execute(
-            select(weak_passwords.c.password).where(weak_passwords.c.is_active.is_(True))
+            select(weak_passwords.c.password).where(
+                weak_passwords.c.is_active == true()
+            )
         )
         return [row.password for row in rows]
 
