@@ -20,18 +20,18 @@
       "examples": ["jsmith-ieu2023"]
     },
     "public_url": {
-      "description": "The live HTTPS URL of the UI (its storage static website endpoint).",
+      "description": "The live HTTPS URL of the Azure Static Web App serving the UI.",
       "type": "string",
       "pattern": "^https://"
     },
     "ui": {
-      "description": "The static UI, deployed to an Azure Storage static website.",
+      "description": "The static UI, deployed to an Azure Static Web App.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "storage_account", "calls"],
+      "required": ["path", "static_web_app", "calls"],
       "properties": {
         "path": { "description": "Folder of the UI in the repository.", "type": "string", "pattern": "^ui/?$" },
-        "storage_account": { "description": "Name of the storage account serving the UI: the prefix without hyphens, followed by ui (a digit may be added if the name is taken).", "type": "string", "pattern": "^[a-z0-9]{3,24}$" },
+        "static_web_app": { "description": "Name of the Azure Static Web App: <prefix>-ui.", "type": "string", "pattern": "^[a-z0-9-]+-ui$" },
         "calls": {
           "description": "Services the UI calls from the browser.",
           "type": "array",
