@@ -204,4 +204,3 @@ It retries each `/health` endpoint until the timeout expires and fails the
 deployment if either service does not return HTTP 200.
 
 Deployment workflow configuration is in `.github/workflows/cd.yml`.
-*** End Patch
