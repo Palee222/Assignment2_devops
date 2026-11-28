@@ -89,6 +89,7 @@ jobs:
         with:
           context: ./Dev2/services/service1
           platforms: linux/amd64
+          provenance: false
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: ${{ steps.image.outputs.prefix }}-password-service:${{ github.sha }}
           build-args: |
@@ -102,3 +103,9 @@ jobs:
           tags: ${{ steps.image.outputs.prefix }}-incidents-service:${{ github.sha }}
           build-args: |
             GIT_SHA=${{ github.sha }}
+
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+  workflow_call:

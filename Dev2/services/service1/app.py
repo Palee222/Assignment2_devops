@@ -21,7 +21,14 @@ logger = logging.getLogger("password-service")
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    init_db()
+    for attempt in range(1, 13):
+        try:
+            init_db()
+            break
+        except SQLAlchemyError:
+            if attempt == 12:
+                raise
+            time.sleep(min(5 * attempt, 30))
     seed_weak_passwords()
     yield
 
