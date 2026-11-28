@@ -1,7 +1,10 @@
 # yaml-language-server: $schema=./system.schema.json
-name: secnote
+student: lsomogyi.ieu2024
+prefix: lsomogyi-ieu2024
+public_url: https://lsomogyiieu2024ui.z43.web.core.windows.net/
 ui:
   path: ui
+  storage_account: lsomogyiieu2024ui
   calls:
     - password
     - incidents
@@ -33,12 +36,15 @@ services:
         default: http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080,http://127.0.0.1:8080
         description: Comma-separated exact browser origins allowed to call the API.
     calls:
-      service: incidents
-      url_env: INCIDENTS_SERVICE_URL
-      endpoints:
-        - POST /incidents
-      timeout_s: 2
-      on_failure: Return the password score and mark incident_report unavailable.
+      - service: incidents
+        url_env: INCIDENTS_SERVICE_URL
+        endpoints:
+          - POST /incidents
+        timeout_s: 2
+        on_failure: Return the password score and mark incident_report unavailable.
+    azure:
+      container_app: lsomogyi-ieu2024-password
+      sql_database: lsomogyi-ieu2024-password-db
   incidents:
     description: Creates, lists, and updates security incidents and tags.
     path: services/service2
@@ -59,6 +65,12 @@ services:
       CORS_ALLOWED_ORIGINS:
         default: http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080,http://127.0.0.1:8080
         description: Comma-separated exact browser origins allowed to call the API.
+    azure:
+      container_app: lsomogyi-ieu2024-incidents
+      sql_database: lsomogyi-ieu2024-incidents-db
 azure:
-  deployment: not-configured
-  note: Configure deployment targets and resource identifiers for the Azure environment.
+  resource_group: rg-lsomogyi-ieu2024
+  container_apps_environment: lsomogyi-ieu2024-env
+  sql_server: lsomogyi-ieu2024-sql-es
+  registry: ghcr.io
+  region: spaincentral

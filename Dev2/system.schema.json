@@ -20,18 +20,18 @@
       "examples": ["jsmith-ieu2023"]
     },
     "public_url": {
-      "description": "The live HTTPS URL of the Azure Static Web App serving the UI.",
+      "description": "The live HTTPS URL of the Azure Storage static website serving the UI.",
       "type": "string",
       "pattern": "^https://"
     },
     "ui": {
-      "description": "The static UI, deployed to an Azure Static Web App.",
+      "description": "The static UI, deployed with Azure Storage static website hosting.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "static_web_app", "calls"],
+      "required": ["path", "storage_account", "calls"],
       "properties": {
         "path": { "description": "Folder of the UI in the repository.", "type": "string", "pattern": "^ui/?$" },
-        "static_web_app": { "description": "Name of the Azure Static Web App: <prefix>-ui.", "type": "string", "pattern": "^[a-z0-9-]+-ui$" },
+        "storage_account": { "description": "Name of the Azure Storage account hosting the static website.", "type": "string", "pattern": "^[a-z0-9]{3,24}$" },
         "calls": {
           "description": "Services the UI calls from the browser.",
           "type": "array",
@@ -42,26 +42,27 @@
       }
     },
     "azure": {
-      "description": "Shared Azure resources of the system. Every name starts with the prefix.",
+      "description": "Shared Azure resources of the deployed system.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["resource_group", "container_apps_environment", "sql_server", "registry"],
+      "required": ["resource_group", "container_apps_environment", "sql_server", "registry", "region"],
       "properties": {
         "resource_group": { "type": "string", "pattern": "^[a-z0-9-]+$" },
         "container_apps_environment": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "region": { "description": "Azure region hosting the deployed resources.", "type": "string", "pattern": "^[a-z0-9]+$" },
         "sql_server": {
           "description": "Azure SQL logical server hosting every service's database, without .database.windows.net.",
           "type": "string",
           "pattern": "^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$"
         },
         "registry": {
-          "description": "Image registry and namespace, e.g. ghcr.io/<github-user>.",
+          "description": "Container image registry hostname; the GHCR namespace follows the GitHub repository used by the deployment workflow.",
           "type": "string"
         }
       }
     },
     "services": {
-      "description": "The two domain services, keyed by their names in docker-compose.yml.",
+      "description": "The two domain services, keyed by their logical names used in UI and service calls.",
       "type": "object",
       "minProperties": 2,
       "maxProperties": 2,
